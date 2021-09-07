@@ -1,0 +1,54 @@
+version: "3"
+ 
+services:
+  db:
+    command: --default-authentication-plugin=mysql_native_password
+    container_name: todolist-db
+    environment:
+      MYSQL_ROOT_PASSWORD: password
+    image: mysql:8.0
+    cap_add:
+      - SYS_NICE
+    volumes:
+      - data-volume:/var/lib/mysql
+      - ./my.cnf:/etc/mysql/mysql.cnf
+    command: mysqld --character-set-server=utf8mb4  --collation-server=utf8mb4_unicode_ci --skip-character-set-client-handshake
+    
+  migration:
+    image: flyway/flyway
+    depends_on:
+      - db
+    container_name: todolist-migration
+    volumes:
+      - ./database/schema:/flyway/sql
+
+  api:
+    build:
+      context: ./backend
+    command: reflex -r '\.go$$' -s -- sh -c 'go run cmd/api/main.go -databaseDatasource="${DATABASE_DATASOURCE}" -port=10001'
+    container_name: todolist-api
+    ports:
+      - 10001:10001
+    volumes:
+      - ./backend:/app
+    working_dir: /app
+
+  flutter:
+    image: flutter-docker/ubuntu:latest 
+    working_dir: /app
+    command: sleep infinity
+    environment:
+      - no_proxy=127.0.0.1,localhost
+    volumes:
+      - ~/.gitconfig:/.gitconfig
+      - ./:/app
+      - /tmp/.X11-unix:/tmp/.X11-unix
+    devices:
+      - /dev/dri:/dev/dri
+    network_mode: "host"
+    extra_hosts:
+      - flutter:127.0.1.1
+
+volumes:
+  data-volume:
+  careler_node_modules-volume:
