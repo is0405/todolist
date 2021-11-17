@@ -9,10 +9,6 @@
 
 # Setup
 
-```
-git clone https://github.com/care-con/careler
-```
-
 ### Docker
 
 - Docker Desktop
